@@ -1,6 +1,7 @@
 {
   "name": "anas-book-browse",
   "private": true,
+  "type": "module",
   "workspaces": [
     "frontend",
     "backend"
