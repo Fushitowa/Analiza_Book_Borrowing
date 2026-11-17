@@ -5,7 +5,7 @@ import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import multer from "multer";
 import type { PostgrestError } from "@supabase/supabase-js";
-import { getAdminClient, getAuthClient } from "./supabase.js";
+import { getAdminClient, getAuthClient, getPublicClient } from "./supabase.js";
 
 type StaffRequest = Request & { staff?: { id: string; name: string; email: string; role: string } };
 type AsyncRoute = (req: StaffRequest, res: Response, next: NextFunction) => Promise<void>;
@@ -117,7 +117,7 @@ app.use("/api", rateLimit({ windowMs: 15 * 60 * 1000, limit: 180, standardHeader
 router.get("/health", (_req, res) => res.json({ status: "ok" }));
 
 router.get("/books", asyncRoute(async (_req, res) => {
-  const { data, error } = await getAdminClient()
+  const { data, error } = await getPublicClient()
     .from("books")
     .select("*, category:categories(id, name)")
     .order("created_at", { ascending: false });
@@ -126,7 +126,7 @@ router.get("/books", asyncRoute(async (_req, res) => {
 }));
 
 router.get("/categories", asyncRoute(async (_req, res) => {
-  const { data, error } = await getAdminClient().from("categories").select("id, name").order("name");
+  const { data, error } = await getPublicClient().from("categories").select("id, name").order("name");
   if (error) { sendDatabaseError(res, error, "Could not load book categories."); return; }
   res.json({ categories: data ?? [] });
 }));

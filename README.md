@@ -36,7 +36,8 @@ A simple, public book catalog and borrowing-request system. Visitors can browse 
 │   │   └── styles.css
 │   └── package.json
 ├── supabase/
-│   └── schema.sql            # Tables, policies, atomic operations, and starter books
+│   ├── schema.sql            # Tables, policies, atomic operations, and initial books
+│   └── seed.sql              # Additional books to fill out every category
 ├── .env.example
 ├── package.json
 └── vercel.json
@@ -66,7 +67,7 @@ A simple, public book catalog and borrowing-request system. Visitors can browse 
    VITE_API_URL=
    ```
 
-   Keep `.env` private. The service-role key is used only by the backend and must never be given a `VITE_` prefix or committed.
+   The publishable/anon key supports public catalog reads. The service-role key is required for borrowing transactions and staff administration so those operations stay behind the validated, rate-limited backend. Keep `.env` private; use the service-role key only in the backend, never with a `VITE_` prefix or in committed files.
 
 3. Set up Supabase using the instructions below.
 
@@ -87,9 +88,10 @@ npm run dev --workspace backend
 
 ## Supabase setup
 
-1. Open the Supabase SQL Editor and run [`supabase/schema.sql`](./supabase/schema.sql). It creates the categories, books, staff, and borrowing-record tables; read policies; transaction-safe database functions; a public `book-covers` storage bucket; and sample books with Open Library cover links.
-2. In **Authentication → Users**, create an account for each staff member. Public visitors do not need an account.
-3. Add authorized staff to the `staff` table, using the user ID and email of the account you just created:
+1. Open the Supabase SQL Editor and run [`supabase/schema.sql`](./supabase/schema.sql). It creates the categories, books, staff, and borrowing-record tables; read policies; transaction-safe database functions; a public `book-covers` storage bucket; and the initial sample books.
+2. Run [`supabase/seed.sql`](./supabase/seed.sql) to add 18 more books. Together, the two seed scripts provide three books in each of the ten categories, with Open Library cover images. If you have already run the schema, you can run this seed script on its own.
+3. In **Authentication → Users**, create an account for each staff member. Public visitors do not need an account.
+4. Add authorized staff to the `staff` table, using the user ID and email of the account you just created:
 
    ```sql
    insert into public.staff (user_id, name, email, role)

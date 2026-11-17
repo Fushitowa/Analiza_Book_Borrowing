@@ -51,6 +51,9 @@ alter table public.books enable row level security;
 alter table public.staff enable row level security;
 alter table public.borrowing_records enable row level security;
 
+grant usage on schema public to anon, authenticated;
+grant select on public.categories, public.books to anon, authenticated;
+
 drop policy if exists "Categories are publicly readable" on public.categories;
 create policy "Categories are publicly readable" on public.categories
   for select to anon, authenticated using (true);

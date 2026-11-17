@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 let adminClient: SupabaseClient | undefined;
 let authClient: SupabaseClient | undefined;
+let publicClient: SupabaseClient | undefined;
 
 function required(name: string): string {
   const value = process.env[name];
@@ -25,4 +26,13 @@ export function getAuthClient(): SupabaseClient {
     });
   }
   return authClient;
+}
+
+export function getPublicClient(): SupabaseClient {
+  if (!publicClient) {
+    publicClient = createClient(required("SUPABASE_URL"), required("SUPABASE_ANON_KEY"), {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+  }
+  return publicClient;
 }
