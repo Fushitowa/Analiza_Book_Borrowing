@@ -5,6 +5,7 @@ import {
   Star, Upload, Users, X,
 } from "lucide-react";
 import { api } from "./api";
+import { sampleBooks } from "./sampleBooks";
 import type { Book, Borrowing, Category, StaffSession } from "./types";
 
 const initialCategories = [
@@ -33,7 +34,9 @@ function PublicCatalog() {
   const [books, setBooks] = useState<Book[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState("");
+  const [previewMode, setPreviewMode] = useState(false);
+  const [previewMessage, setPreviewMessage] = useState("");
+  const [borrowingEnabled, setBorrowingEnabled] = useState(false);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All");
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
@@ -44,11 +47,22 @@ function PublicCatalog() {
     Promise.all([api.books(), api.categories()])
       .then(([bookResult, categoryResult]) => {
         if (!active) return;
-        setBooks(bookResult.books);
         setCategories(categoryResult.categories);
+        setBorrowingEnabled(bookResult.borrowingEnabled);
+        if (bookResult.books.length === 0) {
+          setBooks(sampleBooks);
+          setPreviewMode(true);
+          setPreviewMessage("The live catalog is empty. These sample titles are for browsing only; run the Supabase seed script to add books.");
+          return;
+        }
+        setBooks(bookResult.books);
       })
-      .catch((error: unknown) => {
-        if (active) setLoadError(error instanceof Error ? error.message : "The catalog could not be loaded.");
+      .catch(() => {
+        if (active) {
+          setBooks(sampleBooks);
+          setPreviewMode(true);
+          setPreviewMessage("The live catalog is not connected yet. These sample titles are for browsing only; run the Supabase schema and seed scripts to load live books.");
+        }
       })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
@@ -133,15 +147,15 @@ function PublicCatalog() {
           </nav>
 
           {loading && <div className="state-panel"><LoaderCircle className="spin" size={24} /> Opening the library…</div>}
-          {!loading && loadError && <div className="state-panel error-panel"><CircleAlert size={20} /><span>{loadError}</span><button className="text-button" onClick={() => window.location.reload()}>Try again</button></div>}
-          {!loading && !loadError && visibleBooks.length > 0 && (
+          {!loading && (previewMode || !borrowingEnabled) && <div className="catalog-notice" role="status"><CircleAlert size={17} /><span>{previewMode ? `${previewMessage} Borrowing stays disabled until live inventory is connected.` : "Live titles are shown, but borrowing is disabled until the backend service-role key is configured."}</span></div>}
+          {!loading && visibleBooks.length > 0 && (
             <div className="book-grid">
               {visibleBooks.map((book) => (
                 <article className="book-card" key={book.id}>
                   <div className="card-cover-wrap">
                     <Cover book={book} />
-                    <span className={`availability ${book.availableCopies > 0 ? "available" : "unavailable"}`}>
-                      <span />{book.availableCopies > 0 ? "Available" : "Borrowed"}
+                    <span className={`availability ${previewMode ? "preview" : book.availableCopies > 0 ? "available" : "unavailable"}`}>
+                      <span />{previewMode ? "Sample title" : book.availableCopies > 0 ? "Available" : "Borrowed"}
                     </span>
                   </div>
                   <div className="book-details">
@@ -149,15 +163,15 @@ function PublicCatalog() {
                     <h3 title={book.title}>{book.title}</h3>
                     <p className="book-author">by {book.author}</p>
                     <p className="book-description">{book.description}</p>
-                    <button className="borrow-button" disabled={book.availableCopies < 1} onClick={() => setSelectedBook(book)}>
-                      {book.availableCopies > 0 ? <>Rent now <ArrowRight size={15} /></> : "Currently borrowed"}
+                    <button className="borrow-button" disabled={previewMode || !borrowingEnabled || book.availableCopies < 1} onClick={() => setSelectedBook(book)}>
+                      {previewMode || !borrowingEnabled ? "Borrowing unavailable" : book.availableCopies > 0 ? <>Rent now <ArrowRight size={15} /></> : "Currently borrowed"}
                     </button>
                   </div>
                 </article>
               ))}
             </div>
           )}
-          {!loading && !loadError && visibleBooks.length === 0 && (
+          {!loading && visibleBooks.length === 0 && (
             <div className="state-panel empty-panel"><Search size={23} /><strong>No books found</strong><span>Try a different search or category.</span><button className="text-button" onClick={() => { setQuery(""); setCategory("All"); }}>Clear filters</button></div>
           )}
         </section>

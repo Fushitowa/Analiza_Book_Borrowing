@@ -48,7 +48,7 @@ async function request<T>(path: string, init: RequestInit = {}, token?: string):
 }
 
 export const api = {
-  books: () => request<{ books: Book[] }>("/books"),
+  books: () => request<{ books: Book[]; borrowingEnabled: boolean }>("/books"),
   categories: () => request<{ categories: Category[] }>("/categories"),
   borrow: (input: { bookId: string; borrowerName: string; borrowerContact: string }) =>
     request<{ borrowing: Pick<Borrowing, "id" | "status" | "dueDate"> }>("/borrowings", { method: "POST", body: JSON.stringify(input) }),

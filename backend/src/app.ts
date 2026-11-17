@@ -122,7 +122,10 @@ router.get("/books", asyncRoute(async (_req, res) => {
     .select("*, category:categories(id, name)")
     .order("created_at", { ascending: false });
   if (error) { sendDatabaseError(res, error, "Could not load the book catalog."); return; }
-  res.json({ books: (data ?? []).map((row) => toBook(row as Record<string, unknown>)) });
+  res.json({
+    books: (data ?? []).map((row) => toBook(row as Record<string, unknown>)),
+    borrowingEnabled: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+  });
 }));
 
 router.get("/categories", asyncRoute(async (_req, res) => {

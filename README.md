@@ -5,6 +5,7 @@ A simple, public book catalog and borrowing-request system. Visitors can browse 
 ## Features
 
 - Public catalog with title, author, and category search; category filters; ratings; availability; and responsive book cards.
+- A read-only 30-title preview (three books per genre) appears if Supabase is empty or unavailable; borrowing stays disabled until live inventory and the backend service-role key are configured.
 - Borrowing requests without visitor accounts. The backend checks availability and reserves a copy atomically; staff can approve or reject requests and record returns.
 - Staff-only portal for managing books, cover images, categories, inventory, and borrowing requests.
 - Supabase Auth for staff credentials, Supabase Postgres for library data, and Supabase Storage for uploaded covers.
@@ -33,6 +34,7 @@ A simple, public book catalog and borrowing-request system. Visitors can browse 
 │   ├── src/
 │   │   ├── App.tsx           # Public catalog and staff portal
 │   │   ├── api.ts            # Frontend API client
+│   │   ├── sampleBooks.ts    # Read-only preview books (three per genre)
 │   │   └── styles.css
 │   └── package.json
 ├── supabase/
