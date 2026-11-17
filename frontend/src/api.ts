@@ -42,14 +42,26 @@ async function request<T>(path: string, init: RequestInit = {}, token?: string):
       window.dispatchEvent(new Event("staff-session-expired"));
     }
   }
-  const body = (await response.json().catch(() => ({}))) as { error?: string } & T;
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    throw new Error("The server returned an unexpected response. Please try again.");
+  }
+  const body = await response.json() as { error?: string } & T;
   if (!response.ok) throw new Error(body.error || "Something went wrong. Please try again.");
   return body;
 }
 
 export const api = {
-  books: () => request<{ books: Book[]; borrowingEnabled: boolean }>("/books"),
-  categories: () => request<{ categories: Category[] }>("/categories"),
+  books: async () => {
+    const result = await request<{ books: Book[]; borrowingEnabled: boolean }>("/books");
+    if (!Array.isArray(result.books)) throw new Error("The catalog API returned an invalid book list.");
+    return { books: result.books, borrowingEnabled: result.borrowingEnabled === true };
+  },
+  categories: async () => {
+    const result = await request<{ categories: Category[] }>("/categories");
+    if (!Array.isArray(result.categories)) throw new Error("The catalog API returned an invalid category list.");
+    return { categories: result.categories };
+  },
   borrow: (input: { bookId: string; borrowerName: string; borrowerContact: string }) =>
     request<{ borrowing: Pick<Borrowing, "id" | "status" | "dueDate"> }>("/borrowings", { method: "POST", body: JSON.stringify(input) }),
   login: (email: string, password: string) =>
